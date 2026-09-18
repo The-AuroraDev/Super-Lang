@@ -2,8 +2,8 @@
 
 你不提交git
 
-有什么需要记录，要复用的放在/AI docs文件夹内
-有一些指令性的文档还有不便于提交且不适合放在 /AI docs的放在 /内部文件
+有什么需要记录，要复用的放在/home/anan/Programming project/Super-Lang/AI docs文件夹内
+有一些指令性的文档还有不便于提交且不适合放在/home/anan/Programming project/Super-Lang/AI docs的放在 /home/anan/Programming project/Super-Lang/内部文件
 
 所有tag、CI从0.0.1开始
 
