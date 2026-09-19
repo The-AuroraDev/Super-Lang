@@ -1,19 +1,21 @@
-# Super-Lang
+Super-Lang
+==========
 
 一门支持自动推导所有权、显式错误处理、内置构建工具链的现代系统级编程语言。
 
-## 特性
+特性
+----
 
-- **自动所有权推导**：编译期自动管理内存，无需手写生命周期
-- **显式错误处理**：`return err` 模式，强制处理错误
-- **内置工具链**：`super init/run/build/tidy/mod/file` 一站式开发
-- **C 互操作**：直接生成 C 代码，零依赖编译
-- **并发原语**：内置 CSP 风格通道 (`say`/`listen`)
-- **泛型支持**：编译期单态化，零运行时开销
+* 自动所有权推导：编译期自动管理内存，无需手写生命周期
+* 显式错误处理：return err 模式，强制处理错误
+* 内置工具链：super init/run/build/tidy/mod/file 一站式开发
+* C 互操作：直接生成 C 代码，零依赖编译
+* 并发原语：内置 CSP 风格通道
+* 泛型支持：编译期单态化，零运行时开销
 
-## 快速开始
+快速开始
+--------
 
-```bash
 # 构建编译器
 make -j4
 
@@ -22,7 +24,6 @@ make -j4
 cd myproj
 
 # 编写代码 (main.super)
-# main.super:
 # #main
 # fn main() -> int {
 #     out("Hello, Super!")
@@ -34,11 +35,10 @@ cd myproj
 
 # 构建可执行文件
 ./build/bin/superc build main.super
-```
 
-## 语法示例
+语法示例
+--------
 
-```super
 #main
 
 include fmt
@@ -58,11 +58,10 @@ pub fn main() -> int {
     fmt_printf("Distance: %f\n", d)
     return 0
 }
-```
 
-## 项目结构
+项目结构
+--------
 
-```
 Super-Lang/
 ├── src/
 │   ├── cmd/superc/       # 编译器入口
@@ -79,22 +78,24 @@ Super-Lang/
 ├── docs/                 # 语言文档
 ├── AI docs/              # 内部设计文档
 └── Makefile              # 构建系统
-```
 
-## 开发路线图
+开发路线图
+----------
 
-详见 [AI docs/ROADMAP.md](AI docs/ROADMAP.md)
+详见 AI docs/ROADMAP.md
 
-- P0: 语言规范冻结
-- P1: C 引导编译器
-- P2: 标准库与工具链
-- P3: 自举编译器
-- P4: Go 重写与生产化
+* P0: 语言规范冻结
+* P1: C 引导编译器
+* P2: 标准库与工具链
+* P3: 自举编译器
+* P4: Go 重写与生产化
 
-## 贡献
+贡献
+----
 
-请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [SECURITY.md](SECURITY.md)
+请阅读 CONTRIBUTING.txt 和 SECURITY.md
 
-## 许可证
+许可证
+------
 
-[MIT License](LICENSE)
+MIT License - 详见 LICENSE.txt

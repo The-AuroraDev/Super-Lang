@@ -1,0 +1,26 @@
+name: 'Setup Build Environment'
+description: 'Install build dependencies for Super-Lang'
+runs:
+  using: 'composite'
+  steps:
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential make gcc clang dpkg-dev rpm
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        brew install make gcc dpkg rpm
+
+    - name: Verify tools
+      shell: bash
+      run: |
+        make --version
+        gcc --version
+        clang --version || true
+        dpkg-deb --version || true
+        rpm --version || true

@@ -1,0 +1,276 @@
+name: CI & Release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  VERSION: 0.0.1
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: superc-linux-amd64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact: superc-linux-arm64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: superc-macos-amd64
+          - os: macos-latest
+            target: arm64-apple-darwin
+            artifact: superc-macos-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: superc-windows-amd64.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        if: runner.os != 'Windows'
+
+      - name: Setup build environment (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install make -y
+          echo "C:/ProgramData/chocolatey/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build
+        run: make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+        shell: bash
+
+      - name: Run tests
+        run: make test
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            build/bin/superc*
+          retention-days: 7
+
+  release:
+    name: Create Release
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          # Linux AMD64
+          cp dist/superc-linux-amd64/superc release/superc-linux-amd64
+          # Linux ARM64
+          cp dist/superc-linux-arm64/superc release/superc-linux-arm64
+          # macOS AMD64
+          cp dist/superc-macos-amd64/superc release/superc-macos-amd64
+          # macOS ARM64
+          cp dist/superc-macos-arm64/superc release/superc-macos-arm64
+          # Windows AMD64
+          cp dist/superc-windows-amd64.exe/superc.exe release/superc-windows-amd64.exe
+
+      - name: Create install scripts
+        run: |
+          cat > release/install.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          VERSION="${1:-latest}"
+          INSTALL_DIR="${2:-/usr/local/bin}"
+          
+          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+          ARCH=$(uname -m)
+          
+          case "$ARCH" in
+            x86_64) ARCH="amd64" ;;
+            aarch64|arm64) ARCH="arm64" ;;
+            *) echo "Unsupported arch: $ARCH"; exit 1 ;;
+          esac
+          
+          case "$OS" in
+            linux) PLATFORM="linux-$ARCH" ;;
+            darwin) PLATFORM="macos-$ARCH" ;;
+            *) echo "Unsupported OS: $OS"; exit 1 ;;
+          esac
+          
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/superc-${PLATFORM}"
+          [ "$OS" = "windows" ] && URL="${URL}.exe"
+          
+          echo "Downloading $URL..."
+          curl -fsSL "$URL" -o superc
+          chmod +x superc
+          sudo mv superc "$INSTALL_DIR/superc"
+          echo "Installed to $INSTALL_DIR/superc"
+          superc --version
+          EOF
+          chmod +x release/install.sh
+
+          cat > release/install.ps1 << 'EOF'
+          param(
+            [string]$Version = "latest",
+            [string]$InstallDir = "C:\Program Files\Super"
+          )
+          
+          $arch = (Get-CimInstance Win32_Processor).AddressWidth
+          if ($arch -eq 64) { $arch = "amd64" } else { $arch = "386" }
+          
+          $url = "https://github.com/${env:GITHUB_REPOSITORY}/releases/download/v${Version}/superc-windows-${arch}.exe"
+          
+          Write-Host "Downloading $url..."
+          Invoke-WebRequest -Uri $url -OutFile "superc.exe"
+          
+          if (-not (Test-Path $InstallDir)) {
+            New-Item -ItemType Directory -Path $InstallDir -Force
+          }
+          
+          Move-Item -Force superc.exe "$InstallDir\superc.exe"
+          $env:PATH += ";$InstallDir"
+          [Environment]::SetEnvironmentVariable("PATH", $env:PATH, "User")
+          
+          Write-Host "Installed to $InstallDir\superc.exe"
+          & "$InstallDir\superc.exe" --version
+          EOF
+
+      - name: Create packages
+        run: |
+          cd release
+          VERSION=${GITHUB_REF_NAME#v}
+          
+          # Create tarballs
+          tar czf superc-linux-amd64.tar.gz superc-linux-amd64
+          tar czf superc-linux-arm64.tar.gz superc-linux-arm64
+          tar czf superc-macos-amd64.tar.gz superc-macos-amd64
+          tar czf superc-macos-arm64.tar.gz superc-macos-arm64
+          
+          # Create zip for Windows
+          zip superc-windows-amd64.zip superc-windows-amd64.exe
+          
+          # Create checksums
+          sha256sum *.tar.gz *.zip > checksums.txt
+          
+          # Create deb package (Linux AMD64)
+          mkdir -p deb/usr/local/bin
+          cp superc-linux-amd64 deb/usr/local/bin/superc
+          cat > deb/DEBIAN/control << DEBEOF
+          Package: superc
+          Version: $VERSION
+          Section: devel
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Super-Lang Authors
+          Description: Super Language Compiler
+          DEBEOF
+          dpkg-deb --build deb superc_${VERSION}_amd64.deb 2>/dev/null || true
+          
+          # Create rpm package (Linux AMD64)
+          mkdir -p rpm/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+          mkdir -p rpm/usr/local/bin
+          cp superc-linux-amd64 rpm/usr/local/bin/superc
+          cat > rpm/SPECS/superc.spec << RPMEOF
+          Name: superc
+          Version: $VERSION
+          Release: 1
+          Summary: Super Language Compiler
+          License: MIT
+          Group: Development/Tools
+          BuildArch: x86_64
+          %description
+          Super Language Compiler
+          %files
+          /usr/local/bin/superc
+          RPMEOF
+          rpmbuild --define "_topdir $(pwd)/rpm" -bb rpm/SPECS/superc.spec 2>/dev/null || true
+          cp rpm/RPMS/x86_64/superc-${VERSION}-1.x86_64.rpm . 2>/dev/null || true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Super-Lang ${{ github.ref_name }}
+          body: |
+            ## Super-Lang ${{ github.ref_name }}
+            
+            ### 安装
+            
+            **Linux/macOS:**
+            ```bash
+            curl -fsSL https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/install.sh | bash -s ${{ github.ref_name }}
+            ```
+            
+            **Windows (PowerShell):**
+            ```powershell
+            iwr https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/install.ps1 | iex
+            ```
+            
+            ### 下载
+            - `superc-linux-amd64` / `.tar.gz`
+            - `superc-linux-arm64` / `.tar.gz`
+            - `superc-macos-amd64` / `.tar.gz`
+            - `superc-macos-arm64` / `.tar.gz`
+            - `superc-windows-amd64.exe` / `.zip`
+            - `superc_${VERSION}_amd64.deb`
+            - `superc-${VERSION}-1.x86_64.rpm`
+            
+            ### 校验
+            ```
+            sha256sum -c checksums.txt
+            ```
+          draft: false
+          prerelease: false
+          files: |
+            release/superc-*
+            release/install.sh
+            release/install.ps1
+            release/checksums.txt
+            release/*.deb
+            release/*.rpm
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish to Package Registries
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 可扩展：发布到 Homebrew, Scoop, Chocolatey, AUR 等
+      - name: Update Homebrew formula
+        run: |
+          echo "Homebrew formula update would go here"
+        # 示例：使用 homebrew-action 更新 tap 仓库

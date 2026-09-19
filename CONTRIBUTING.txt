@@ -1,0 +1,73 @@
+# Contributing to Super-Lang
+
+感谢您考虑为 Super-Lang 做出贡献！
+
+## 行为准则
+
+本项目遵循 [Contributor Covenant](https://www.contributor-covenant.org/) 行为准则。参与即表示您同意遵守该准则。
+
+## 如何贡献
+
+### 报告 Bug
+
+1. 检查 [Issues](https://github.com/your-repo/Super-Lang/issues) 确认未被报告
+2. 创建新 Issue，包含：
+   - Super 版本 (`superc --version`)
+   - 操作系统和架构
+   - 复现步骤
+   - 预期行为 vs 实际行为
+   - 相关代码片段
+
+### 提交 Pull Request
+
+1. Fork 仓库
+2. 创建特性分支：`git checkout -b feature/your-feature`
+3. 编写代码并添加测试
+4. 运行测试：`make test`
+5. 确保代码风格：`make fmt`
+6. 静态分析：`make vet`
+7. 提交 PR，描述变更内容和动机
+
+### 代码风格
+
+- C11 标准，`clang-format` 格式化
+- 无警告编译 (`-Wall -Wextra -Wpedantic -Werror`)
+- 所有公开 API 需要文档注释
+- 新功能需添加测试用例
+
+### 提交信息规范
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+类型：`feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+## 开发环境
+
+```bash
+# 克隆仓库
+git clone https://github.com/your-repo/Super-Lang.git
+cd Super-Lang
+
+# 构建
+make -j4
+
+# 运行测试
+make test
+
+# 格式化代码
+make fmt
+```
+
+## 版本发布
+
+语义化版本 `MAJOR.MINOR.PATCH`，从 `0.0.1` 开始。
+
+## 许可证
+
+贡献代码将在 [LICENSE](LICENSE) 下授权。
