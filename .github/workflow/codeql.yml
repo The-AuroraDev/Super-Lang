@@ -1,0 +1,50 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 6 * * 1'   # 每周一 06:00 UTC
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'go', 'c-cpp' ]   # 只分析 Go 和 C/C++
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+
+      # Go 使用自动构建
+      - name: Autobuild for Go
+        if: matrix.language == 'go'
+        uses: github/codeql-action/autobuild@v3
+
+      # C/C++ 建议手动构建；请按你的项目替换下面的命令
+      - name: Build C/C++
+        if: matrix.language == 'c-cpp'
+        run: |
+          make -j$(nproc)
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

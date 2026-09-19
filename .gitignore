@@ -1,4 +1,37 @@
-/AI docs
-/内部文件
+# Build artifacts
+build/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+superc
 
+# Meson
+meson-private/
+meson-logs/
+
+# Cache
+~/.cache/super/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test outputs
+test_output/
+
+# AI docs (internal)
+AI docs/
+
+# 内部文件
+内部文件/
+
+# Configuration
 AGENTS.md
