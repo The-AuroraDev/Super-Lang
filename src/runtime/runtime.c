@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
 #include "super_runtime.h"
 #include <stdlib.h>
 #include <stdio.h>

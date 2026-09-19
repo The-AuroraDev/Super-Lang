@@ -24,23 +24,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
             artifact: superc-linux-amd64
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            artifact: superc-linux-arm64
           - os: macos-latest
-            target: x86_64-apple-darwin
             artifact: superc-macos-amd64
-          - os: macos-latest
-            target: arm64-apple-darwin
-            artifact: superc-macos-arm64
           - os: windows-latest
-            target: x86_64-pc-windows-msvc
             artifact: superc-windows-amd64.exe
-          - os: windows-latest
-            target: aarch64-pc-windows-msvc
-            artifact: superc-windows-arm64.exe
 
     steps:
       - name: Checkout
@@ -74,9 +62,35 @@ jobs:
             build/bin/superc*
           retention-days: 7
 
+  test-arm64:
+    name: Test ARM64 (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install cross-compilation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu make
+
+      - name: Build for ARM64
+        run: |
+          CC=aarch64-linux-gnu-gcc make -j$(nproc) clean all
+
+      - name: Upload ARM64 artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: superc-linux-arm64
+          path: |
+            build/bin/superc*
+          retention-days: 7
+
   release:
     name: Create Release
-    needs: test
+    needs: [test, test-arm64]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -102,16 +116,12 @@ jobs:
           mkdir -p release
           # Linux AMD64
           cp dist/superc-linux-amd64/superc release/superc-linux-amd64
-          # Linux ARM64
+          # Linux ARM64 (cross-compiled)
           cp dist/superc-linux-arm64/superc release/superc-linux-arm64
           # macOS AMD64
           cp dist/superc-macos-amd64/superc release/superc-macos-amd64
-          # macOS ARM64
-          cp dist/superc-macos-arm64/superc release/superc-macos-arm64
           # Windows AMD64
           cp dist/superc-windows-amd64.exe/superc.exe release/superc-windows-amd64.exe
-          # Windows ARM64
-          cp dist/superc-windows-arm64.exe/superc.exe release/superc-windows-arm64.exe
 
       - name: Create packages
         run: |
@@ -122,11 +132,9 @@ jobs:
           tar czf superc-linux-amd64.tar.gz superc-linux-amd64
           tar czf superc-linux-arm64.tar.gz superc-linux-arm64
           tar czf superc-macos-amd64.tar.gz superc-macos-amd64
-          tar czf superc-macos-arm64.tar.gz superc-macos-arm64
           
           # Create zip for Windows
           zip superc-windows-amd64.zip superc-windows-amd64.exe
-          zip superc-windows-arm64.zip superc-windows-arm64.exe
           
           # Create checksums
           sha256sum *.tar.gz *.zip > checksums.txt
@@ -192,9 +200,7 @@ jobs:
             | Linux x86_64 | `superc-linux-amd64` | `superc-linux-amd64.tar.gz` |
             | Linux ARM64 | `superc-linux-arm64` | `superc-linux-arm64.tar.gz` |
             | macOS x86_64 | `superc-macos-amd64` | `superc-macos-amd64.tar.gz` |
-            | macOS ARM64 | `superc-macos-arm64` | `superc-macos-arm64.tar.gz` |
             | Windows x86_64 | `superc-windows-amd64.exe` | `superc-windows-amd64.zip` |
-            | Windows ARM64 | `superc-windows-arm64.exe` | `superc-windows-arm64.zip` |
             
             ### 系统安装包
             - `superc_${VERSION}_amd64.deb` (Debian/Ubuntu)
