@@ -1,5 +1,5 @@
-#include "lexer/lexer.h"
-#include "arena/arena.h"
+#include "super/lexer/lexer.h"
+#include "super/arena/arena.h"
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
