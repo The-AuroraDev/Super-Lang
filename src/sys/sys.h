@@ -7,10 +7,10 @@
 extern "C" {
 #endif
 
-void sys_exit(int code);
-char *sys_getenv(const char *key);
-const char *sys_arch(void);
-const char *sys_os(void);
+void sysExit(int code);
+char *sysGetenv(const char *key);
+const char *sysArch(void);
+const char *sysOS(void);
 
 #ifdef __cplusplus
 }

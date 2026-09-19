@@ -13,13 +13,13 @@ typedef struct {
     size_t cap;
 } Stk;
 
-Stk *stk_new(size_t initial_cap);
-void stk_free(Stk *s);
-void stk_push(Stk *s, void *elem);
-void *stk_pop(Stk *s);
-void *stk_top(Stk *s);
-size_t stk_size(Stk *s);
-int stk_empty(Stk *s);
+Stk *stkNew(size_t initialCap);
+void stkFree(Stk *s);
+void stkPush(Stk *s, void *elem);
+void *stkPop(Stk *s);
+void *stkTop(Stk *s);
+size_t stkSize(Stk *s);
+int stkEmpty(Stk *s);
 
 #ifdef __cplusplus
 }

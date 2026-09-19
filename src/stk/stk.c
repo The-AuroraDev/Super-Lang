@@ -2,54 +2,54 @@
 #include <stdlib.h>
 #include <string.h>
 
-Stk *stk_new(size_t initial_cap) {
-    if (initial_cap == 0) initial_cap = 8;
+Stk *stkNew(size_t initialCap) {
+    if (initialCap == 0) initialCap = 8;
     Stk *s = malloc(sizeof(Stk));
     if (!s) return NULL;
-    s->data = malloc(initial_cap * sizeof(void *));
+    s->data = malloc(initialCap * sizeof(void *));
     if (!s->data) { free(s); return NULL; }
     s->len = 0;
-    s->cap = initial_cap;
+    s->cap = initialCap;
     return s;
 }
 
-void stk_free(Stk *s) {
+void stkFree(Stk *s) {
     if (s) {
         free(s->data);
         free(s);
     }
 }
 
-static int stk_grow(Stk *s) {
-    size_t new_cap = s->cap * 2;
-    void **new_data = realloc(s->data, new_cap * sizeof(void *));
-    if (!new_data) return -1;
-    s->data = new_data;
-    s->cap = new_cap;
+static int stkGrow(Stk *s) {
+    size_t newCap = s->cap * 2;
+    void **newData = realloc(s->data, newCap * sizeof(void *));
+    if (!newData) return -1;
+    s->data = newData;
+    s->cap = newCap;
     return 0;
 }
 
-void stk_push(Stk *s, void *elem) {
+void stkPush(Stk *s, void *elem) {
     if (s->len >= s->cap) {
-        if (stk_grow(s) != 0) return;
+        if (stkGrow(s) != 0) return;
     }
     s->data[s->len++] = elem;
 }
 
-void *stk_pop(Stk *s) {
+void *stkPop(Stk *s) {
     if (s->len == 0) return NULL;
     return s->data[--s->len];
 }
 
-void *stk_top(Stk *s) {
+void *stkTop(Stk *s) {
     if (s->len == 0) return NULL;
     return s->data[s->len - 1];
 }
 
-size_t stk_size(Stk *s) {
+size_t stkSize(Stk *s) {
     return s->len;
 }
 
-int stk_empty(Stk *s) {
+int stkEmpty(Stk *s) {
     return s->len == 0;
 }

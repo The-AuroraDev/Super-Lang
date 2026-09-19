@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-char *os_getwd(void) {
+char *osGetwd(void) {
     char *buf = NULL;
     size_t size = 1024;
     while (1) {
@@ -18,17 +18,17 @@ char *os_getwd(void) {
     }
 }
 
-int os_system(const char *cmd) {
+int osSystem(const char *cmd) {
     return system(cmd);
 }
 
-char **os_args(int *argc) {
+char **osArgs(int *argc) {
     extern char **environ;
     (void)argc;
     return environ;
 }
 
-char *os_read_file(const char *path, size_t *len) {
+char *osReadFile(const char *path, size_t *len) {
     FILE *f = fopen(path, "rb");
     if (!f) return NULL;
     fseek(f, 0, SEEK_END);
@@ -43,7 +43,7 @@ char *os_read_file(const char *path, size_t *len) {
     return buf;
 }
 
-int os_write_file(const char *path, const char *data, size_t len) {
+int osWriteFile(const char *path, const char *data, size_t len) {
     FILE *f = fopen(path, "wb");
     if (!f) return -1;
     size_t written = fwrite(data, 1, len, f);
@@ -51,6 +51,6 @@ int os_write_file(const char *path, const char *data, size_t len) {
     return written == len ? 0 : -1;
 }
 
-int os_mkdir(const char *path, int mode) {
+int osMkdir(const char *path, int mode) {
     return mkdir(path, mode);
 }

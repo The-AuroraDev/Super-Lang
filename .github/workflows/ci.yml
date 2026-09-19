@@ -38,6 +38,9 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact: superc-windows-amd64.exe
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            artifact: superc-windows-arm64.exe
 
     steps:
       - name: Checkout
@@ -88,6 +91,12 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Copy install scripts from repo
+        run: |
+          cp install.sh release/
+          cp install.ps1 release/
+          chmod +x release/install.sh
+
       - name: Prepare release files
         run: |
           mkdir -p release
@@ -101,68 +110,8 @@ jobs:
           cp dist/superc-macos-arm64/superc release/superc-macos-arm64
           # Windows AMD64
           cp dist/superc-windows-amd64.exe/superc.exe release/superc-windows-amd64.exe
-
-      - name: Create install scripts
-        run: |
-          cat > release/install.sh << 'EOF'
-          #!/bin/bash
-          set -e
-          
-          VERSION="${1:-latest}"
-          INSTALL_DIR="${2:-/usr/local/bin}"
-          
-          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-          ARCH=$(uname -m)
-          
-          case "$ARCH" in
-            x86_64) ARCH="amd64" ;;
-            aarch64|arm64) ARCH="arm64" ;;
-            *) echo "Unsupported arch: $ARCH"; exit 1 ;;
-          esac
-          
-          case "$OS" in
-            linux) PLATFORM="linux-$ARCH" ;;
-            darwin) PLATFORM="macos-$ARCH" ;;
-            *) echo "Unsupported OS: $OS"; exit 1 ;;
-          esac
-          
-          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/superc-${PLATFORM}"
-          [ "$OS" = "windows" ] && URL="${URL}.exe"
-          
-          echo "Downloading $URL..."
-          curl -fsSL "$URL" -o superc
-          chmod +x superc
-          sudo mv superc "$INSTALL_DIR/superc"
-          echo "Installed to $INSTALL_DIR/superc"
-          superc --version
-          EOF
-          chmod +x release/install.sh
-
-          cat > release/install.ps1 << 'EOF'
-          param(
-            [string]$Version = "latest",
-            [string]$InstallDir = "C:\Program Files\Super"
-          )
-          
-          $arch = (Get-CimInstance Win32_Processor).AddressWidth
-          if ($arch -eq 64) { $arch = "amd64" } else { $arch = "386" }
-          
-          $url = "https://github.com/${env:GITHUB_REPOSITORY}/releases/download/v${Version}/superc-windows-${arch}.exe"
-          
-          Write-Host "Downloading $url..."
-          Invoke-WebRequest -Uri $url -OutFile "superc.exe"
-          
-          if (-not (Test-Path $InstallDir)) {
-            New-Item -ItemType Directory -Path $InstallDir -Force
-          }
-          
-          Move-Item -Force superc.exe "$InstallDir\superc.exe"
-          $env:PATH += ";$InstallDir"
-          [Environment]::SetEnvironmentVariable("PATH", $env:PATH, "User")
-          
-          Write-Host "Installed to $InstallDir\superc.exe"
-          & "$InstallDir\superc.exe" --version
-          EOF
+          # Windows ARM64
+          cp dist/superc-windows-arm64.exe/superc.exe release/superc-windows-arm64.exe
 
       - name: Create packages
         run: |
@@ -177,6 +126,7 @@ jobs:
           
           # Create zip for Windows
           zip superc-windows-amd64.zip superc-windows-amd64.exe
+          zip superc-windows-arm64.zip superc-windows-arm64.exe
           
           # Create checksums
           sha256sum *.tar.gz *.zip > checksums.txt
@@ -225,28 +175,49 @@ jobs:
             
             ### 安装
             
-            **Linux/macOS:**
+            **Linux/macOS (交互式安装):**
             ```bash
             curl -fsSL https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/install.sh | bash -s ${{ github.ref_name }}
             ```
             
-            **Windows (PowerShell):**
+            **Windows PowerShell (交互式安装):**
             ```powershell
             iwr https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/install.ps1 | iex
             ```
             
-            ### 下载
-            - `superc-linux-amd64` / `.tar.gz`
-            - `superc-linux-arm64` / `.tar.gz`
-            - `superc-macos-amd64` / `.tar.gz`
-            - `superc-macos-arm64` / `.tar.gz`
-            - `superc-windows-amd64.exe` / `.zip`
-            - `superc_${VERSION}_amd64.deb`
-            - `superc-${VERSION}-1.x86_64.rpm`
+            ### 直接下载
+            
+            | 平台 | 二进制 | 压缩包 |
+            |------|--------|--------|
+            | Linux x86_64 | `superc-linux-amd64` | `superc-linux-amd64.tar.gz` |
+            | Linux ARM64 | `superc-linux-arm64` | `superc-linux-arm64.tar.gz` |
+            | macOS x86_64 | `superc-macos-amd64` | `superc-macos-amd64.tar.gz` |
+            | macOS ARM64 | `superc-macos-arm64` | `superc-macos-arm64.tar.gz` |
+            | Windows x86_64 | `superc-windows-amd64.exe` | `superc-windows-amd64.zip` |
+            | Windows ARM64 | `superc-windows-arm64.exe` | `superc-windows-arm64.zip` |
+            
+            ### 系统安装包
+            - `superc_${VERSION}_amd64.deb` (Debian/Ubuntu)
+            - `superc-${VERSION}-1.x86_64.rpm` (RHEL/Fedora)
             
             ### 校验
             ```
             sha256sum -c checksums.txt
+            ```
+            
+            ### 安装脚本功能
+            - 交互式中英文选择
+            - 代理配置 (HTTP/HTTPS/SOCKS5)
+            - 安装模式选择 (二进制/源码构建/自动)
+            - 自定义安装目录
+            - 自动更新 PATH
+            
+            ### 快速开始
+            ```bash
+            super init myproj
+            cd myproj
+            super run main.super
+            super build main.super
             ```
           draft: false
           prerelease: false

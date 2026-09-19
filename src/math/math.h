@@ -7,22 +7,22 @@
 extern "C" {
 #endif
 
-double math_sin(double x);
-double math_cos(double x);
-double math_tan(double x);
-double math_asin(double x);
-double math_acos(double x);
-double math_atan(double x);
-double math_sqrt(double x);
-double math_pow(double x, double y);
-double math_exp(double x);
-double math_log(double x);
-double math_floor(double x);
-double math_ceil(double x);
-double math_fabs(double x);
-double math_fmod(double x, double y);
-long math_rand(void);
-void math_srand(unsigned int seed);
+double mathSin(double x);
+double mathCos(double x);
+double mathTan(double x);
+double mathAsin(double x);
+double mathAcos(double x);
+double mathAtan(double x);
+double mathSqrt(double x);
+double mathPow(double x, double y);
+double mathExp(double x);
+double mathLog(double x);
+double mathFloor(double x);
+double mathCeil(double x);
+double mathFabs(double x);
+double mathFmod(double x, double y);
+long mathRand(void);
+void mathSrand(unsigned int seed);
 
 #ifdef __cplusplus
 }

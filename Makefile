@@ -22,6 +22,7 @@ ARFLAGS = rcs
 
 # Targets
 SUPERC = $(BIN_DIR)/superc
+SUPER = $(BIN_DIR)/super
 SUPERC_LIB = $(LIB_DIR)/libsuperc.a
 
 # Source files
@@ -53,6 +54,8 @@ RUNTIME_SRCS = $(SRC_DIR)/runtime/runtime.c \
 
 ARENA_SRCS = $(SRC_DIR)/super/arena/arena.c
 
+CLI_SRCS = $(SRC_DIR)/cmd/super/cli.c
+
 STDLIB_SRCS = $(SRC_DIR)/fmt/fmt.c \
               $(SRC_DIR)/os/os.c \
               $(SRC_DIR)/sys/sys.c \
@@ -61,11 +64,12 @@ STDLIB_SRCS = $(SRC_DIR)/fmt/fmt.c \
 
 ALL_LIB_SRCS = $(LEXER_SRCS) $(PARSER_SRCS) $(AST_SRCS) $(SEMA_SRCS) \
                $(CODEGEN_SRCS) $(DRIVER_SRCS) $(RUNTIME_SRCS) $(ARENA_SRCS) \
-               $(STDLIB_SRCS)
+               $(STDLIB_SRCS) $(CLI_SRCS)
 
 ALL_OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(ALL_LIB_SRCS))
 
 SUPERC_OBJ = $(OBJ_DIR)/cmd/superc/main.o
+SUPER_OBJ = $(OBJ_DIR)/cmd/super/main.o
 
 # Test sources
 TEST_SRCS = tests/lexer_test.c tests/parser_test.c
@@ -74,7 +78,7 @@ TEST_BINS = $(patsubst tests/%.c,$(BIN_DIR)/%,$(TEST_SRCS))
 
 # Default target
 .PHONY: all
-all: $(SUPERC)
+all: $(SUPERC) $(SUPER)
 
 # Build static library
 $(SUPERC_LIB): $(ALL_OBJS)
@@ -83,6 +87,11 @@ $(SUPERC_LIB): $(ALL_OBJS)
 
 # Build superc compiler
 $(SUPERC): $(SUPERC_OBJ) $(SUPERC_LIB)
+	@mkdir -p $(BIN_DIR)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+# Build super CLI tool
+$(SUPER): $(SUPER_OBJ) $(SUPERC_LIB)
 	@mkdir -p $(BIN_DIR)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
@@ -129,9 +138,10 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 # Install to system
-install: $(SUPERC)
+install: $(SUPERC) $(SUPER)
 	install -d $(DESTDIR)/usr/local/bin
 	install -m 755 $(SUPERC) $(DESTDIR)/usr/local/bin/superc
+	install -m 755 $(SUPER) $(DESTDIR)/usr/local/bin/super
 	install -d $(DESTDIR)/usr/local/include/super
 	install -m 644 $(SRC_DIR)/runtime/super_runtime.h $(DESTDIR)/usr/local/include/super/
 

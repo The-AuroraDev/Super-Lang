@@ -2,15 +2,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void sys_exit(int code) {
+void sysExit(int code) {
     exit(code);
 }
 
-char *sys_getenv(const char *key) {
+char *sysGetenv(const char *key) {
     return getenv(key);
 }
 
-const char *sys_arch(void) {
+const char *sysArch(void) {
 #if defined(__x86_64__) || defined(_M_X64)
     return "amd64";
 #elif defined(__aarch64__) || defined(_M_ARM64)
@@ -22,7 +22,7 @@ const char *sys_arch(void) {
 #endif
 }
 
-const char *sys_os(void) {
+const char *sysOS(void) {
 #if defined(_WIN32)
     return "windows";
 #elif defined(__APPLE__)
