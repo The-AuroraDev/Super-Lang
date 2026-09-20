@@ -10,15 +10,18 @@ BIN_DIR = $(BUILD_DIR)/bin
 OBJ_DIR = $(BUILD_DIR)/obj
 LIB_DIR = $(BUILD_DIR)/lib
 
-# Tools
-CC = cc
-CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -Werror \
-         -Wno-unused-parameter -Wno-unused-variable \
-         -I$(SRC_DIR) \
-         -DVERSION=\"$(VERSION)\"
-LDFLAGS = -lm
-AR = ar
+# Tools (can be overridden for cross-compilation)
+CC ?= cc
+CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -Werror \
+          -Wno-unused-parameter -Wno-unused-variable \
+          -I$(SRC_DIR) \
+          -DVERSION=\"$(VERSION)\"
+LDFLAGS ?= -lm
+AR ?= ar
 ARFLAGS = rcs
+
+# For cross-compilation, can override:
+# make CC=aarch64-linux-gnu-gcc CFLAGS="-static -std=c11 ..." LDFLAGS="-static -lm"
 
 # Targets
 SUPERC = $(BIN_DIR)/superc
@@ -174,5 +177,11 @@ help:
 	@echo "  compile-commands - Generate compile_commands.json"
 	@echo "  help          - Show this help"
 
+# Cross-compilation help
+cross-help:
+	@echo "Cross-compilation examples:"
+	@echo "  Linux ARM64:  make CC=aarch64-linux-gnu-gcc CFLAGS='-static -std=c11 -Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter -Wno-unused-variable -Isrc -DVERSION=\"$(VERSION)\"' LDFLAGS='-static -lm' clean all"
+	@echo "  Windows:      make CC=x86_64-w64-mingw32-gcc clean all"
+
 # Prevent make from deleting intermediate files
-.SECONDARY: $(ALL_OBJS) $(SUPERC_OBJ) $(TEST_OBJS)
+.SECONDARY: $(ALL_OBJS) $(SUPERC_OBJ) $(SUPER_OBJ) $(TEST_OBJS)

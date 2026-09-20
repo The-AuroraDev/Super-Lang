@@ -32,13 +32,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup build environment
-        uses: ./.github/actions/setup-build
-        if: runner.os != 'Windows'
+      - name: Setup build environment (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential make gcc clang
+
+      - name: Setup build environment (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install make gcc
 
       - name: Setup build environment (Windows)
         if: runner.os == 'Windows'
@@ -55,7 +62,7 @@ jobs:
         shell: bash
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
           path: |
@@ -67,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -77,11 +84,15 @@ jobs:
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu make
 
       - name: Build for ARM64
+        env:
+          CC: aarch64-linux-gnu-gcc
+          CFLAGS: -static
         run: |
-          CC=aarch64-linux-gnu-gcc make -j$(nproc) clean all
+          make clean
+          make -j$(nproc) CC=aarch64-linux-gnu-gcc CFLAGS="-static"
 
       - name: Upload ARM64 artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: superc-linux-arm64
           path: |
@@ -95,12 +106,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
@@ -174,7 +185,7 @@ jobs:
           cp rpm/RPMS/x86_64/superc-${VERSION}-1.x86_64.rpm . 2>/dev/null || true
 
       - name: Create Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: Super-Lang ${{ github.ref_name }}
@@ -244,7 +255,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       # 可扩展：发布到 Homebrew, Scoop, Chocolatey, AUR 等
       - name: Update Homebrew formula
