@@ -185,7 +185,7 @@ jobs:
           cp rpm/RPMS/x86_64/superc-${VERSION}-1.x86_64.rpm . 2>/dev/null || true
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: Super-Lang ${{ github.ref_name }}
