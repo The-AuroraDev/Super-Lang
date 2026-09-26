@@ -62,7 +62,7 @@ jobs:
         shell: bash
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact }}
           path: |
@@ -92,7 +92,7 @@ jobs:
           make -j$(nproc) CC=aarch64-linux-gnu-gcc CFLAGS="-static"
 
       - name: Upload ARM64 artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: superc-linux-arm64
           path: |
